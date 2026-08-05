@@ -1,5 +1,7 @@
 # ais
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 `ais` is a small cross-platform TUI for finding and resuming local Claude Code and OpenAI Codex sessions.
 
 It is intentionally read-only: the program scans native JSONL files, shows a searchable list, and launches the selected native CLI with the session's recorded working directory.
@@ -15,6 +17,8 @@ Or install the command into Go's binary directory:
 ```powershell
 go install ./cmd/ais
 ```
+
+Prebuilt binaries are available from the [GitHub Releases](https://github.com/esverde/ai-sessions/releases) page.
 
 Run it from the directory you want to inspect:
 
