@@ -84,6 +84,10 @@ go install ./cmd/ais
 
 会话根目录可以通过原生环境变量 `CLAUDE_CONFIG_DIR` 和 `CODEX_HOME` 覆盖。
 
+## 许可证
+
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE)。
+
 ## 会话来源
 
 Claude 会话读取自 `.claude/projects/**/*.jsonl`。Codex 会话读取自 `.codex/sessions/**/*.jsonl`；启用 `include_archived` 后也会包含已归档的 Codex 会话。

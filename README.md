@@ -82,6 +82,10 @@ Accepted values:
 
 Provider roots can be overridden by the native environment variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME`.
 
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
 ## Session sources
 
 Claude sessions are read from `.claude/projects/**/*.jsonl`. Codex sessions are read from `.codex/sessions/**/*.jsonl`; archived Codex sessions are included when `include_archived` is enabled.
