@@ -77,3 +77,26 @@ func TestClaudeSlugMatch(t *testing.T) {
 		t.Fatal("其它项目不应匹配")
 	}
 }
+
+// 回归:作用域比较常涉及尚不存在的子目录。EvalSymlinks 要求整条路径存在,
+// 若只在整条路径可解析时才规范化,已存在的父目录会被解析成符号链接的目标
+// (macOS 的 /var -> /private/var),而不存在的子路径保持原样,同一棵树下的
+// 两个路径就会互不包含。
+func TestNormalizePathResolvesExistingPrefix(t *testing.T) {
+	root := t.TempDir()
+	child := filepath.Join(root, "does-not-exist-yet", "deeper")
+
+	normalizedRoot := NormalizePath(root)
+	normalizedChild := NormalizePath(child)
+
+	if !strings.HasPrefix(normalizedChild, normalizedRoot) {
+		t.Fatalf("子路径应落在已规范化的父路径下:\n  root  = %q\n  child = %q", normalizedRoot, normalizedChild)
+	}
+	if !IsWithin(root, child) {
+		t.Fatal("尚不存在的子目录仍应判定为在作用域内")
+	}
+	// 整条路径都不存在时保持原样,不应把它错拼到当前工作目录下。
+	if got := NormalizePath(normalizedRoot); got != normalizedRoot {
+		t.Fatalf("重复规范化应幂等, got %q want %q", got, normalizedRoot)
+	}
+}

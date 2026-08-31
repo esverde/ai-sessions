@@ -101,10 +101,34 @@ func NormalizePath(value string) string {
 		abs = value
 	}
 	abs = filepath.Clean(abs)
-	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
-		abs = filepath.Clean(resolved)
+	return resolveExistingPrefix(abs)
+}
+
+// resolveExistingPrefix 解析路径中最长的已存在前缀,再把余下的部分拼回去。
+//
+// filepath.EvalSymlinks 要求整条路径都存在,而作用域比较经常涉及尚不存在的
+// 子目录。若只对存在的整条路径解析,同一棵树下的两个路径会得到不一致的表示
+// —— macOS 上 /var 是 /private/var 的符号链接,已存在的 root 被解析成
+// /private/var/...,而尚不存在的 root/child 原样保留 /var/...,两者一比就
+// 成了互不包含。逐级回退到能解析的那一层,可以让二者落在同一前缀上。
+func resolveExistingPrefix(abs string) string {
+	rest := ""
+	current := abs
+	for {
+		if resolved, err := filepath.EvalSymlinks(current); err == nil {
+			if rest == "" {
+				return filepath.Clean(resolved)
+			}
+			return filepath.Clean(filepath.Join(resolved, rest))
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			// 一路到根都无法解析(整条路径都不存在),保持原样。
+			return abs
+		}
+		rest = filepath.Join(filepath.Base(current), rest)
+		current = parent
 	}
-	return abs
 }
 
 func IsWithin(root, candidate string) bool {
