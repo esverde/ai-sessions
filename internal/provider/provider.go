@@ -22,8 +22,10 @@ func Discover(providerName string, options session.ScanOptions) ([]session.Sessi
 		providers = append(providers, Claude{})
 	case "codex":
 		providers = append(providers, Codex{})
+	case "antigravity", "agy":
+		providers = append(providers, Antigravity{})
 	default:
-		providers = append(providers, Claude{}, Codex{})
+		providers = append(providers, Claude{}, Codex{}, Antigravity{})
 	}
 
 	var sessions []session.Session

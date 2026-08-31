@@ -8,7 +8,12 @@ import (
 )
 
 func TestNextProvider(t *testing.T) {
-	checks := map[string]string{config.ProviderAll: config.ProviderClaude, config.ProviderClaude: config.ProviderCodex, config.ProviderCodex: config.ProviderAll}
+	checks := map[string]string{
+		config.ProviderAll:         config.ProviderClaude,
+		config.ProviderClaude:      config.ProviderCodex,
+		config.ProviderCodex:       config.ProviderAntigravity,
+		config.ProviderAntigravity: config.ProviderAll,
+	}
 	for input, want := range checks {
 		if got := nextProvider(input); got != want {
 			t.Fatalf("nextProvider(%q) = %q, want %q", input, got, want)

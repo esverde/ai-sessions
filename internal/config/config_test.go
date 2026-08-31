@@ -33,6 +33,15 @@ func TestSaveAndLoadNormalizesValues(t *testing.T) {
 	}
 }
 
+// agy 是 Antigravity 的命令名,写进配置里应当被认下来而不是退回默认值。
+func TestNormalizeAcceptsAntigravityAlias(t *testing.T) {
+	for _, input := range []string{"agy", "AGY", " Antigravity "} {
+		if got := (Config{Provider: input}).Normalize().Provider; got != ProviderAntigravity {
+			t.Fatalf("Normalize(%q).Provider = %q, want %q", input, got, ProviderAntigravity)
+		}
+	}
+}
+
 func TestNormalizeFallsBackForInvalidValues(t *testing.T) {
 	cfg := (Config{Provider: "other", Scope: "project", Sort: "newest", PreviewLength: 2, MaxSessions: 0}).Normalize()
 	if cfg != Default() {

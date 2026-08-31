@@ -3,8 +3,9 @@ package session
 import "time"
 
 const (
-	ProviderClaude = "claude"
-	ProviderCodex  = "codex"
+	ProviderClaude      = "claude"
+	ProviderCodex       = "codex"
+	ProviderAntigravity = "antigravity"
 )
 
 type Session struct {

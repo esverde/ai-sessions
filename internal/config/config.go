@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	ProviderAll    = "all"
-	ProviderClaude = "claude"
-	ProviderCodex  = "codex"
+	ProviderAll         = "all"
+	ProviderClaude      = "claude"
+	ProviderCodex       = "codex"
+	ProviderAntigravity = "antigravity"
 
 	ScopeCurrent = "current"
 	ScopeAll     = "all"
@@ -46,7 +47,14 @@ func Default() Config {
 func (c Config) Normalize() Config {
 	defaults := Default()
 	c.Provider = strings.ToLower(strings.TrimSpace(c.Provider))
-	if c.Provider != ProviderAll && c.Provider != ProviderClaude && c.Provider != ProviderCodex {
+	// agy 是 Antigravity 的命令名,用惯它的人多半也会往配置里写 agy —— 收下并归一化,
+	// 不要因为一个别名就悄悄退回默认值。
+	if c.Provider == "agy" {
+		c.Provider = ProviderAntigravity
+	}
+	switch c.Provider {
+	case ProviderAll, ProviderClaude, ProviderCodex, ProviderAntigravity:
+	default:
 		c.Provider = defaults.Provider
 	}
 

@@ -24,6 +24,11 @@ func TestResumeArgs(t *testing.T) {
 	if got := resumeArgs(session.Session{Provider: session.ProviderCodex, ID: "x1"}); got[0] != "resume" || got[1] != "x1" {
 		t.Fatalf("Codex resume args = %#v", got)
 	}
+
+	// Antigravity 用 `agy --conversation <id>`;它没有 Codex 那样的 resume 子命令。
+	if got := resumeArgs(session.Session{Provider: session.ProviderAntigravity, ID: "a1"}); got[0] != "--conversation" || got[1] != "a1" {
+		t.Fatalf("Antigravity resume args = %#v", got)
+	}
 }
 
 func TestCommandUsesWorkingDirectory(t *testing.T) {

@@ -17,7 +17,7 @@ var version = "dev"
 
 func main() {
 	configOverride := flag.String("config", "", "configuration file path")
-	providerOverride := flag.String("provider", "", "default provider override: all, claude, or codex")
+	providerOverride := flag.String("provider", "", "default provider override: all, claude, codex, or antigravity")
 	sortOverride := flag.String("sort", "", "default sort override: active or path")
 	allProjects := flag.Bool("all", false, "start with all projects visible")
 	initConfig := flag.Bool("init-config", false, "create the default configuration file and exit")

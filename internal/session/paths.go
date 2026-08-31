@@ -46,6 +46,23 @@ func CodexRoot() (string, error) {
 	return filepath.Join(home, ".codex"), nil
 }
 
+// AntigravityRoot 返回 Antigravity(即原 Gemini CLI)的数据根目录。
+//
+// Antigravity 沿用了 Gemini CLI 的 `~/.gemini`,并在其下按"哪个客户端写的"
+// 分成 antigravity-cli / antigravity / antigravity-ide 几个应用数据目录。
+// 官方没有提供改这个位置的环境变量,ANTIGRAVITY_HOME 是 ais 自己的覆盖开关
+// —— 测试需要它,把 `~/.gemini` 搬走的人也需要它。
+func AntigravityRoot() (string, error) {
+	if value := strings.TrimSpace(os.Getenv("ANTIGRAVITY_HOME")); value != "" {
+		return NormalizePath(value), nil
+	}
+	home, err := UserHome()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".gemini"), nil
+}
+
 // ClaudeProjectSlug 把工作目录编码成 Claude Code 用的 projects 子目录名。
 // Claude 把路径里每个非字母数字字符替换成一个连字符,大小写原样保留,
 // 例如 `d:\Documents\Code\Aventon_MMM` -> `d--Documents-Code-Aventon-MMM`。

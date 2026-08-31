@@ -30,6 +30,8 @@ func ResumeSpec(item session.Session) (Spec, error) {
 		program = "claude"
 	case session.ProviderCodex:
 		program = "codex"
+	case session.ProviderAntigravity:
+		program = "agy"
 	default:
 		return Spec{}, fmt.Errorf("unsupported provider %q", item.Provider)
 	}
@@ -59,10 +61,14 @@ func Command(spec Spec) (*exec.Cmd, error) {
 }
 
 func resumeArgs(item session.Session) []string {
-	if item.Provider == session.ProviderClaude {
+	switch item.Provider {
+	case session.ProviderClaude:
 		return []string{"--resume", item.ID}
+	case session.ProviderAntigravity:
+		return []string{"--conversation", item.ID}
+	default:
+		return []string{"resume", item.ID}
 	}
-	return []string{"resume", item.ID}
 }
 
 func isWindowsScript(path string) bool {

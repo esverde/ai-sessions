@@ -2,21 +2,21 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-`ais` 是一个跨平台 TUI，用于查找和恢复本机的 Claude Code 与 OpenAI Codex 会话。
+`ais` 是一个跨平台 TUI，用于查找和恢复本机的 Claude Code、OpenAI Codex 与 Antigravity 会话。
 
-它保持只读：程序扫描原生 JSONL 会话文件，展示可搜索的会话列表，并使用会话记录的工作目录启动对应的原生 CLI。
+它保持只读：程序扫描各家原生的会话存储，展示可搜索的会话列表，并使用会话记录的工作目录启动对应的原生 CLI。
 
 ## 功能
 
 - 跨平台 Go + Bubble Tea TUI。
-- 扫描 Claude Code 和 OpenAI Codex 会话。
+- 扫描 Claude Code、OpenAI Codex 与 Antigravity（`agy`）会话。
 - 支持列出当前目录及其子目录，或全部项目中的会话。
-- provider 筛选：`all`、`claude`、`codex`。
+- provider 筛选：`all`、`claude`、`codex`、`antigravity`。
 - 支持按最近活跃时间或项目文件夹路径排序。
 - 使用 JSON 配置文件，不提供设置 GUI。
 - `/` 搜索，`p` 切换 provider，`a` 切换目录范围，`s` 切换排序方式。
-- 按 `Enter` 恢复会话：在会话记录的工作目录中调用 `claude --resume <id>` 或 `codex resume <id>`。
-- 支持 Claude/Codex 活跃会话，以及 Codex archived 会话。
+- 按 `Enter` 恢复会话：在会话记录的工作目录中调用 `claude --resume <id>`、`codex resume <id>` 或 `agy --conversation <id>`。
+- 支持 Claude/Codex/Antigravity 活跃会话，以及 Codex archived 会话。
 
 ## 下载
 
@@ -65,6 +65,7 @@ ais
 ais --all
 ais --provider claude
 ais --provider codex
+ais --provider antigravity
 ais --sort path
 ais --init-config
 ```
@@ -78,7 +79,7 @@ ais --init-config
 | `Enter` | 恢复选中的会话 |
 | `/` | 搜索/筛选会话 |
 | `a` | 切换当前目录/全部项目 |
-| `p` | 循环切换全部/Claude/Codex |
+| `p` | 循环切换全部/Claude/Codex/Antigravity |
 | `s` | 切换按活跃时间/路径排序 |
 | `r` | 重新扫描 |
 | `?` | 显示快捷键摘要 |
@@ -109,11 +110,11 @@ ais --init-config
 
 支持的值：
 
-- `provider`：`all`、`claude`、`codex`
+- `provider`：`all`、`claude`、`codex`、`antigravity`（也接受别名 `agy`）
 - `scope`：`current`、`all`
 - `sort`：`active`、`path`
 
-会话根目录可以通过原生环境变量 `CLAUDE_CONFIG_DIR` 和 `CODEX_HOME` 覆盖。
+会话根目录可以通过原生环境变量 `CLAUDE_CONFIG_DIR` 和 `CODEX_HOME` 覆盖。Antigravity 没有对应的原生变量，`ais` 为它提供了 `ANTIGRAVITY_HOME`。
 
 ## 许可证
 
@@ -123,6 +124,10 @@ ais --init-config
 
 Claude 会话读取自 `.claude/projects/**/*.jsonl`。Codex 会话读取自 `.codex/sessions/**/*.jsonl`；启用 `include_archived` 后也会包含已归档的 Codex 会话。
 
+Antigravity（原 Gemini CLI）把每个会话单独存成一个 SQLite 库，位于 `.gemini/antigravity-cli/conversations/<id>.db`，而"某个交互式会话属于哪个工作目录"记录在 `.gemini/antigravity-cli/history.jsonl`。`ais` 优先读这份历史文件；会话不在其中时，再从会话库的字节里回退查找工作目录 URI。
+
+只列出 Antigravity CLI 的会话。IDE 的会话存在 `.gemini/antigravity/` 下，但 `agy --conversation <id>` 会以 `trajectory not found` 拒绝它们——列出来只会给出恢复不了的条目。
+
 按下 `Enter` 后，`ais` 会把选中的会话 ID 传给对应的原生 CLI，并在会话记录的项目目录中启动。程序不会修改或删除原生会话文件。
 
-未知或格式错误的 JSONL 记录会被忽略。
+未知或格式错误的 JSONL 记录会被忽略。无法确定工作目录的会话会被跳过，而不是在错误的位置恢复。

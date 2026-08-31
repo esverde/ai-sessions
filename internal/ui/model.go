@@ -183,6 +183,8 @@ func nextProvider(current string) string {
 		return config.ProviderClaude
 	case config.ProviderClaude:
 		return config.ProviderCodex
+	case config.ProviderCodex:
+		return config.ProviderAntigravity
 	default:
 		return config.ProviderAll
 	}
