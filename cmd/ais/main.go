@@ -11,7 +11,9 @@ import (
 	"github.com/esverde/ais/internal/ui"
 )
 
-const version = "0.1.1"
+// version 由构建时注入:`-ldflags "-X main.version=0.1.1"`。
+// 必须是 var —— -X 改不了 const。默认留 dev,以便一眼看出这不是发行构建。
+var version = "dev"
 
 func main() {
 	configOverride := flag.String("config", "", "configuration file path")

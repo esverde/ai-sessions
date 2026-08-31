@@ -59,7 +59,9 @@ func TestDeduplicatePrefersActiveSession(t *testing.T) {
 func TestParseClaudeFileAcceptsRelocatedSession(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "claude.jsonl")
-	data := "{\"type\":\"user\",\"sessionId\":\"claude-moved\",\"cwd\":\"D:\\\\Old\\\\Project\"," +
+	// 另一个项目的目录:模拟搬迁前记录下的旧 cwd,与作用域无关且平台无关。
+	elsewhere := filepath.ToSlash(filepath.Join(filepath.Dir(root), "other-project"))
+	data := "{\"type\":\"user\",\"sessionId\":\"claude-moved\",\"cwd\":\"" + elsewhere + "\"," +
 		"\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hello\"}]}}\n"
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
 		t.Fatalf("write fixture: %v", err)
@@ -102,7 +104,9 @@ func TestParseClaudeFileWithoutCwd(t *testing.T) {
 func TestParseClaudeFileOverridesCwdOnExactSlug(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "claude.jsonl")
-	data := "{\"type\":\"user\",\"sessionId\":\"claude-moved\",\"cwd\":\"D:/Old/Project\"," +
+	// 同上:文件里记录的是旧项目路径,而 slug 说它属于当前作用域。
+	elsewhere := filepath.ToSlash(filepath.Join(filepath.Dir(root), "other-project"))
+	data := "{\"type\":\"user\",\"sessionId\":\"claude-moved\",\"cwd\":\"" + elsewhere + "\"," +
 		"\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hello\"}]}}\n"
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
 		t.Fatalf("write fixture: %v", err)
