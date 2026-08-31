@@ -1,0 +1,19 @@
+version: "2"
+
+linters:
+  # standard = errcheck govet ineffassign staticcheck unused。
+  # 接入时全仓库只有 4 个问题(2 处未检查的 Close、1 处无效赋值、1 处可用 tagged
+  # switch),已全部修掉,所以这里不做任何豁免 —— 有豁免就会慢慢积累。
+  default: standard
+
+formatters:
+  enable:
+    - gofmt
+  # 行尾由 .gitattributes 统一成 LF。若工作区被 autocrlf 转成 CRLF,
+  # gofmt 会把每个文件都报成待格式化,本地与 CI 结论就不一致了。
+
+issues:
+  # 默认只报新增问题时容易漏掉既有缺陷,这里要求全量干净。
+  new: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

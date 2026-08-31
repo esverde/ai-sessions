@@ -14,7 +14,8 @@ func ReadJSONLLines(path string, visit func(map[string]any) error) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	// 只读文件,Close 的错误没有可采取的行动,显式丢弃以示有意为之。
+	defer func() { _ = file.Close() }()
 
 	reader := bufio.NewReaderSize(file, 64*1024)
 	for {
@@ -49,7 +50,8 @@ func ReadTailLines(path string, maxBytes, maxLines int) ([][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	// 只读文件,Close 的错误没有可采取的行动,显式丢弃以示有意为之。
+	defer func() { _ = file.Close() }()
 	info, err := file.Stat()
 	if err != nil {
 		return nil, err

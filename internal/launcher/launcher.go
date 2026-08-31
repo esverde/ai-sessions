@@ -24,12 +24,13 @@ func ResumeSpec(item session.Session) (Spec, error) {
 	if item.Cwd == "" {
 		return Spec{}, errors.New("session working directory is empty")
 	}
-	program := item.Provider
-	if item.Provider == session.ProviderClaude {
+	var program string
+	switch item.Provider {
+	case session.ProviderClaude:
 		program = "claude"
-	} else if item.Provider == session.ProviderCodex {
+	case session.ProviderCodex:
 		program = "codex"
-	} else {
+	default:
 		return Spec{}, fmt.Errorf("unsupported provider %q", item.Provider)
 	}
 	resolved, err := exec.LookPath(program)
