@@ -107,8 +107,15 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
+          # actions/checkout 会把 refs/tags/<tag> 直接指到 commit SHA,不拉取
+          # annotated tag 对象,于是 %(contents:body) 读到的是提交消息而非标签注释。
+          # 显式重取标签对象,并确认它确实是 annotated tag 再用它的正文。
+          git fetch --force --tags origin
+          NOTES=""
+          if [ "$(git cat-file -t "$TAG" 2>/dev/null || true)" = "tag" ]; then
+            NOTES="$(git for-each-ref "refs/tags/${TAG}" --format='%(contents:body)')"
+          fi
           # 说明取自标签注释(git tag -a 写的正文);没有就让 GitHub 按提交自动生成。
-          NOTES="$(git for-each-ref "refs/tags/${TAG}" --format='%(contents:body)')"
           if [ -n "${NOTES//[[:space:]]/}" ]; then
             printf '%s\n' "$NOTES" > dist/notes.md
             NOTE_ARGS=(--notes-file dist/notes.md)
