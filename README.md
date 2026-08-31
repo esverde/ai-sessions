@@ -24,13 +24,13 @@ Prebuilt binaries are available from the [GitHub Releases](https://github.com/es
 
 The installed command is `ais` on Windows, macOS, and Linux.
 
-```powershell
+```sh
 go build ./cmd/ais
 ```
 
 For regular use, install the command into Go's binary directory and make sure that directory is on `PATH`:
 
-```powershell
+```sh
 go install ./cmd/ais
 ais
 ```
@@ -40,14 +40,14 @@ ais
 Downloaded macOS and Linux binaries may need the executable bit enabled. For example:
 
 ```sh
-chmod +x ./ais-v0.1.0-darwin-arm64
+chmod +x ./ais-v0.2.0-darwin-arm64
 mkdir -p ~/.local/bin
-mv ./ais-v0.1.0-darwin-arm64 ~/.local/bin/ais
+mv ./ais-v0.2.0-darwin-arm64 ~/.local/bin/ais
 export PATH="$HOME/.local/bin:$PATH"
 ais
 ```
 
-Use the matching Linux or Intel macOS asset in place of `ais-v0.1.0-darwin-arm64`. You can add the `PATH` export to your shell profile for future sessions.
+Use the matching Linux or Intel macOS asset in place of `ais-v0.2.0-darwin-arm64`. You can add the `PATH` export to your shell profile for future sessions.
 
 ### Windows release binary
 
@@ -57,9 +57,11 @@ Place the downloaded Windows binary on `PATH` (you may rename it to `ais.exe`). 
 ais
 ```
 
+### Running it
+
 Run it from the directory you want to inspect. The default scope is the current directory and its descendants. Useful overrides:
 
-```powershell
+```sh
 ais --all
 ais --provider claude
 ais --provider codex
@@ -87,7 +89,7 @@ The command name is `ais` (AI Sessions).
 
 The configuration file is created with:
 
-```powershell
+```sh
 ais --init-config
 ```
 
@@ -114,10 +116,6 @@ Accepted values:
 
 Provider roots can be overridden by the native environment variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME`. Antigravity has no native equivalent, so `ais` provides `ANTIGRAVITY_HOME` for the same purpose.
 
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
-
 ## Session sources
 
 Claude sessions are read from `.claude/projects/**/*.jsonl`. Codex sessions are read from `.codex/sessions/**/*.jsonl`; archived Codex sessions are included when `include_archived` is enabled.
@@ -129,3 +127,7 @@ Only Antigravity CLI conversations are listed. The IDE keeps its own conversatio
 When you press `Enter`, `ais` passes the selected session ID to the native CLI and starts it in the recorded project directory. It does not edit or delete the native session files.
 
 Unknown or malformed JSONL records are ignored. A conversation whose working directory cannot be determined is skipped rather than resumed in the wrong place.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
