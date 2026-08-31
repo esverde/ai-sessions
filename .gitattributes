@@ -1,0 +1,8 @@
+# 统一用 LF。Windows 上若让 autocrlf 把工作区转成 CRLF,gofmt 会把每个文件
+# 都报成需要格式化,而 CI(Linux,检出即 LF)却是干净的 —— 本地与 CI 结论不一致,
+# 格式检查也就失去了意义。
+* text=auto eol=lf
+
+*.exe binary
+*.png binary
+*.jpg binary
