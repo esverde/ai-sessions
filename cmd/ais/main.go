@@ -11,7 +11,7 @@ import (
 	"github.com/esverde/ais/internal/ui"
 )
 
-const version = "0.1.0"
+const version = "0.1.1"
 
 func main() {
 	configOverride := flag.String("config", "", "configuration file path")
