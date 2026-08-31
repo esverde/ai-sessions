@@ -38,7 +38,7 @@ func (Claude) Discover(options session.ScanOptions) ([]session.Session, error) {
 		}
 		// Claude 按 projects/<slug>/ 归置会话,slug 由工作目录编码而来。
 		// 目录匹配即在作用域内,不必再依赖会话文件里那个可能已过时的 cwd。
-		inScope := session.ClaudeSlugMatches(options.ScopeRoot, project.Name())
+		inScope, exactScope := session.ClaudeSlugMatch(options.ScopeRoot, project.Name())
 		dir := filepath.Join(projects, project.Name())
 		walkErr := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, walkErr error) error {
 			if walkErr != nil {
@@ -54,7 +54,7 @@ func (Claude) Discover(options session.ScanOptions) ([]session.Session, error) {
 			if strings.ToLower(filepath.Ext(entry.Name())) != ".jsonl" {
 				return nil
 			}
-			item, ok, parseErr := parseClaudeFile(path, options, inScope)
+			item, ok, parseErr := parseClaudeFile(path, options, inScope, exactScope)
 			if parseErr != nil {
 				return nil
 			}
@@ -70,8 +70,9 @@ func (Claude) Discover(options session.ScanOptions) ([]session.Session, error) {
 	return result, nil
 }
 
-// inScopeBySlug 表示该文件所在的 projects/<slug>/ 目录已经匹配当前作用域。
-func parseClaudeFile(path string, options session.ScanOptions, inScopeBySlug bool) (session.Session, bool, error) {
+// inScopeBySlug 表示该文件所在的 projects/<slug>/ 目录匹配当前作用域;
+// exactSlug 进一步表示 slug 与作用域完全相同,即会话就属于 ScopeRoot 本身。
+func parseClaudeFile(path string, options session.ScanOptions, inScopeBySlug, exactSlug bool) (session.Session, bool, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return session.Session{}, false, err
@@ -136,10 +137,16 @@ func parseClaudeFile(path string, options session.ScanOptions, inScopeBySlug boo
 	if !options.ScopeAll && !inScopeBySlug {
 		return session.Session{}, false, nil
 	}
-	if item.Cwd != "" {
+	// Cwd 会被当作 resume 时的工作目录(launcher.ResumeSpec 的 Dir)。
+	// slug 精确匹配时以作用域为准:文件里的 cwd 是会话开始时的历史值,项目改名或
+	// 会话被搬迁后就是旧路径,照它启动会把人带回旧目录。slug 只是前缀匹配(子目录
+	// 会话)或全局扫描到的别的项目,则保留文件里的 cwd —— 那才是它们的真实位置。
+	switch {
+	case exactSlug:
+		item.Cwd = session.NormalizePath(options.ScopeRoot)
+	case item.Cwd != "":
 		item.Cwd = session.NormalizePath(item.Cwd)
-	} else {
-		// 会话文件没记 cwd(或只有元信息行),用作用域补上,避免界面显示空白。
+	case inScopeBySlug:
 		item.Cwd = session.NormalizePath(options.ScopeRoot)
 	}
 	item.LastUser = FirstNonEmpty(lastPrompt, item.LastUser)

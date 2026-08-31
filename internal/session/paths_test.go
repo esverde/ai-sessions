@@ -34,18 +34,19 @@ func TestClaudeProjectSlug(t *testing.T) {
 	}
 }
 
-func TestClaudeSlugMatches(t *testing.T) {
+func TestClaudeSlugMatch(t *testing.T) {
 	root := `d:\Documents\Code\Aventon_MMM`
-	if !ClaudeSlugMatches(root, "d--Documents-Code-Aventon-MMM") {
-		t.Fatal("同名 slug 应匹配")
+	if within, exact := ClaudeSlugMatch(root, "d--Documents-Code-Aventon-MMM"); !within || !exact {
+		t.Fatalf("同名 slug 应精确匹配, got within=%v exact=%v", within, exact)
 	}
-	if !ClaudeSlugMatches(root, "d--Documents-Code-Aventon-MMM-src") {
-		t.Fatal("子目录会话应匹配")
+	// 子目录会话要纳入,但不是 exact —— 它的工作目录是子目录,不能被作用域覆盖。
+	if within, exact := ClaudeSlugMatch(root, "d--Documents-Code-Aventon-MMM-src"); !within || exact {
+		t.Fatalf("子目录会话应 within 但非 exact, got within=%v exact=%v", within, exact)
 	}
-	if ClaudeSlugMatches(root, "d--Documents-Code-Aventon-MMMX") {
+	if within, _ := ClaudeSlugMatch(root, "d--Documents-Code-Aventon-MMMX"); within {
 		t.Fatal("仅前缀相同的兄弟项目不应匹配")
 	}
-	if ClaudeSlugMatches(root, "d--Documents-Code-MMM-Meridian") {
+	if within, _ := ClaudeSlugMatch(root, "d--Documents-Code-MMM-Meridian"); within {
 		t.Fatal("其它项目不应匹配")
 	}
 }

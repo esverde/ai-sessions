@@ -71,19 +71,24 @@ func ClaudeProjectSlug(value string) string {
 	return b.String()
 }
 
-// ClaudeSlugMatches 判断 projects 下的某个目录名是否属于 root 的作用域。
-// 目录名与 root 的 slug 相等表示就是该目录的会话;以 `slug-` 开头表示是 root
-// 子目录里开出的会话,同样应当纳入(与 IsWithin 对 cwd 的语义保持一致)。
-func ClaudeSlugMatches(root, dirName string) bool {
+// ClaudeSlugMatch 判断 projects 下的某个目录名与 root 作用域的关系。
+//
+// within 表示该目录的会话应纳入作用域;exact 表示目录名与 root 的 slug 完全相同,
+// 也就是"这些会话就属于 root 本身"。以 `slug-` 开头的是 root 子目录里开出的会话,
+// within 为真但 exact 为假 —— 它们的工作目录是子目录而非 root,不可混为一谈。
+func ClaudeSlugMatch(root, dirName string) (within, exact bool) {
 	slug := ClaudeProjectSlug(root)
 	if slug == "" || dirName == "" {
-		return false
+		return false, false
 	}
 	if runtime.GOOS == "windows" {
 		slug = strings.ToLower(slug)
 		dirName = strings.ToLower(dirName)
 	}
-	return dirName == slug || strings.HasPrefix(dirName, slug+"-")
+	if dirName == slug {
+		return true, true
+	}
+	return strings.HasPrefix(dirName, slug+"-"), false
 }
 
 func NormalizePath(value string) string {
