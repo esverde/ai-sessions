@@ -18,7 +18,7 @@ func TestParseClaudeFile(t *testing.T) {
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
 		t.Fatalf("write fixture: %v", err)
 	}
-	item, ok, err := parseClaudeFile(path, session.ScanOptions{ScopeRoot: root, PreviewLength: 160})
+	item, ok, err := parseClaudeFile(path, session.ScanOptions{ScopeRoot: root, PreviewLength: 160}, true)
 	if err != nil || !ok {
 		t.Fatalf("parseClaudeFile() = %#v, %v, %v", item, ok, err)
 	}
@@ -50,5 +50,48 @@ func TestDeduplicatePrefersActiveSession(t *testing.T) {
 	items := Deduplicate([]session.Session{{Provider: "codex", ID: "1", Archived: true}, {Provider: "codex", ID: "1", Archived: false}})
 	if len(items) != 1 || items[0].Archived {
 		t.Fatalf("Deduplicate() = %#v", items)
+	}
+}
+
+// 会话被搬到另一个项目的 projects/<slug>/ 目录后,文件里的 cwd 仍是搬迁前的旧路径。
+// 归属只认所在 slug 目录:slug 匹配就纳入(哪怕 cwd 是别的路径),不匹配就排除
+// (哪怕 cwd 指向当前作用域)——否则搬走的会话会同时出现在新旧两个项目里。
+func TestParseClaudeFileAcceptsRelocatedSession(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "claude.jsonl")
+	data := "{\"type\":\"user\",\"sessionId\":\"claude-moved\",\"cwd\":\"D:\\\\Old\\\\Project\"," +
+		"\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hello\"}]}}\n"
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	options := session.ScanOptions{ScopeRoot: root, PreviewLength: 160}
+
+	if _, ok, err := parseClaudeFile(path, options, false); err != nil || ok {
+		t.Fatalf("slug 不匹配时应排除, got ok=%v err=%v", ok, err)
+	}
+	item, ok, err := parseClaudeFile(path, options, true)
+	if err != nil || !ok {
+		t.Fatalf("slug 匹配时应纳入: ok=%v err=%v", ok, err)
+	}
+	if item.ID != "claude-moved" {
+		t.Fatalf("parsed session = %#v", item)
+	}
+}
+
+// 只有元信息、没有 cwd 的会话文件不应被丢弃,Cwd 用作用域补齐。
+func TestParseClaudeFileWithoutCwd(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "claude.jsonl")
+	data := "{\"type\":\"user\",\"sessionId\":\"claude-nocwd\"," +
+		"\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hi\"}]}}\n"
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	item, ok, err := parseClaudeFile(path, session.ScanOptions{ScopeRoot: root, PreviewLength: 160}, true)
+	if err != nil || !ok {
+		t.Fatalf("无 cwd 但 slug 匹配时应纳入: ok=%v err=%v", ok, err)
+	}
+	if item.Cwd == "" {
+		t.Fatalf("Cwd 应回填为作用域, got %#v", item)
 	}
 }

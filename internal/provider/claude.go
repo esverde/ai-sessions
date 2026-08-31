@@ -26,34 +26,52 @@ func (Claude) Discover(options session.ScanOptions) ([]session.Session, error) {
 		return nil, err
 	}
 
+	entries, err := os.ReadDir(projects)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]session.Session, 0)
-	err = filepath.WalkDir(projects, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
+	for _, project := range entries {
+		if !project.IsDir() {
+			continue
 		}
-		if entry.IsDir() {
-			name := strings.ToLower(entry.Name())
-			if name == "subagents" || name == "tool-results" {
-				return fs.SkipDir
+		// Claude 按 projects/<slug>/ 归置会话,slug 由工作目录编码而来。
+		// 目录匹配即在作用域内,不必再依赖会话文件里那个可能已过时的 cwd。
+		inScope := session.ClaudeSlugMatches(options.ScopeRoot, project.Name())
+		dir := filepath.Join(projects, project.Name())
+		walkErr := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if entry.IsDir() {
+				name := strings.ToLower(entry.Name())
+				if name == "subagents" || name == "tool-results" || name == "memory" {
+					return fs.SkipDir
+				}
+				return nil
+			}
+			if strings.ToLower(filepath.Ext(entry.Name())) != ".jsonl" {
+				return nil
+			}
+			item, ok, parseErr := parseClaudeFile(path, options, inScope)
+			if parseErr != nil {
+				return nil
+			}
+			if ok {
+				result = append(result, item)
 			}
 			return nil
+		})
+		if walkErr != nil {
+			return result, walkErr
 		}
-		if strings.ToLower(filepath.Ext(entry.Name())) != ".jsonl" {
-			return nil
-		}
-		item, ok, parseErr := parseClaudeFile(path, options)
-		if parseErr != nil {
-			return nil
-		}
-		if ok {
-			result = append(result, item)
-		}
-		return nil
-	})
-	return result, err
+	}
+	return result, nil
 }
 
-func parseClaudeFile(path string, options session.ScanOptions) (session.Session, bool, error) {
+// inScopeBySlug 表示该文件所在的 projects/<slug>/ 目录已经匹配当前作用域。
+func parseClaudeFile(path string, options session.ScanOptions, inScopeBySlug bool) (session.Session, bool, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return session.Session{}, false, err
@@ -112,12 +130,17 @@ func parseClaudeFile(path string, options session.ScanOptions) (session.Session,
 	if !hasRecord || item.ID == "" {
 		return session.Session{}, false, nil
 	}
-	if item.Cwd == "" {
+	// 归属只看所在的 projects/<slug>/ 目录 —— 那是 Claude 判定归属的事实来源。
+	// 不用文件里的 cwd:它是会话开始时的历史值,目录改名或会话被搬到别的项目后
+	// 就会失配;若拿它兜底,搬走的会话还会同时出现在旧项目里,造成重复归属。
+	if !options.ScopeAll && !inScopeBySlug {
 		return session.Session{}, false, nil
 	}
-	item.Cwd = session.NormalizePath(item.Cwd)
-	if !options.ScopeAll && !session.IsWithin(options.ScopeRoot, item.Cwd) {
-		return session.Session{}, false, nil
+	if item.Cwd != "" {
+		item.Cwd = session.NormalizePath(item.Cwd)
+	} else {
+		// 会话文件没记 cwd(或只有元信息行),用作用域补上,避免界面显示空白。
+		item.Cwd = session.NormalizePath(options.ScopeRoot)
 	}
 	item.LastUser = FirstNonEmpty(lastPrompt, item.LastUser)
 	item.Title = FirstNonEmpty(item.Title, lastPrompt, firstUser, item.ID)
